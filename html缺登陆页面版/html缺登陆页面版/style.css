@@ -1,0 +1,353 @@
+/* style.css */
+/* 通用样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Microsoft YaHei', sans-serif;
+}
+
+/* 头部样式 */
+header {
+    background-color: #0072c6;
+    color: white;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.login-btn {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: white;
+    text-decoration: none;
+    padding: 8px 16px;
+    border: 1px solid white;
+    border-radius: 5px;
+    transition: all 0.3s;
+    background: rgba(255,255,255,0.1);
+}
+
+.login-btn:hover {
+    background: rgba(255,255,255,0.2);
+    transform: translateY(-50%) scale(1.05);
+}
+
+/* 医院图片区域（修复重复显示关键部分） */
+.hospital-image {
+    height: 33vh;
+    position: relative;
+    overflow: hidden;
+    border-bottom: 3px solid #0072c6;
+    background: #f0f8ff; /* 加载时的背景色 */
+}
+
+.hospital-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block; /* 消除默认间隙 */
+    transition: transform 0.5s ease;
+}
+
+.hospital-image:hover img {
+    transform: scale(1.03);
+}
+
+/* 图片加载失败提示 */
+.hospital-image::after {
+    content: "图片加载失败，请联系管理员";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ff4444;
+    font-size: 1.2rem;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 15px 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    display: none;
+    text-align: center;
+    max-width: 80%;
+    z-index: 2;
+}
+
+/* 加载失败检测逻辑 */
+.hospital-image img[src=""] + ::after,
+.hospital-image:has(img[alt="broken-image"])::after,
+.hospital-image:not(:has(img))::after {
+    display: block;
+}
+
+/* 智能导诊区域 */
+.guide-section {
+    padding: 30px 20px;
+    text-align: center;
+    background: linear-gradient(to right, #f8fbff, #e6f3ff);
+}
+
+.guide-dialog {
+    display: inline-flex;
+    align-items: center;
+    background: #0072c6;
+    color: white;
+    padding: 18px 40px;
+    border-radius: 40px;
+    text-decoration: none;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,114,198,0.3);
+    transition: all 0.3s;
+    gap: 10px;
+}
+
+.guide-dialog::after {
+    content: '▶';
+    font-size: 0.9em;
+    transition: transform 0.3s;
+}
+
+.guide-dialog:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,114,198,0.4);
+}
+
+.guide-dialog:hover::after {
+    transform: translateX(3px);
+}
+
+/* 主体内容区域 */
+.main-content {
+    display: flex;
+    padding: 30px 20px;
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* 挂号区域 */
+.registration-section {
+    flex: 1;
+    padding: 25px;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    min-height: 300px;
+}
+
+/* 公告栏区域 */
+.notice-section {
+    flex: 1;
+    padding: 25px;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* 滚动条样式 */
+.notice-section::-webkit-scrollbar {
+    width: 8px;
+}
+
+.notice-section::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.notice-section::-webkit-scrollbar-thumb {
+    background: #0072c6;
+    border-radius: 4px;
+}
+
+/* 标题样式 */
+h1 {
+    font-size: 2.2rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    letter-spacing: 1px;
+    padding: 0 120px 0 20px;
+}
+
+h2 {
+    color: #0072c6;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e0e0e0;
+    font-size: 1.6rem;
+    position: relative;
+}
+
+.registration-section h2::after,
+.notice-section h2::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background: #0072c6;
+}
+
+/* 列表样式 */
+ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+li {
+    margin-bottom: 12px;
+    padding: 15px;
+    background: rgba(240,248,255,0.5);
+    border-radius: 8px;
+    transition: all 0.3s;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+li::before {
+    content: '•';
+    color: #0072c6;
+    font-weight: bold;
+}
+
+li:hover {
+    background: rgba(240,248,255,0.9);
+    transform: translateX(8px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+        padding: 20px 15px;
+        gap: 20px;
+    }
+
+    header {
+        padding: 15px;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+        padding-right: 100px;
+    }
+
+    .login-btn {
+        position: static;
+        display: inline-block;
+        margin-top: 15px;
+        transform: none;
+    }
+
+    .hospital-image {
+        height: 25vh;
+    }
+
+    .guide-dialog {
+        width: 100%;
+        justify-content: center;
+        padding: 15px;
+    }
+
+    .registration-section,
+    .notice-section {
+        min-height: auto;
+        max-height: none;
+    }
+}
+
+/* 文章详情页样式 */
+.article-container {
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.article-body {
+    line-height: 1.8;
+    font-size: 16px;
+    color: #444;
+}
+
+.article-body h3 {
+    color: #0072c6;
+    margin: 25px 0 15px;
+}
+
+.article-body ul {
+    margin: 15px 0;
+    padding-left: 30px;
+}
+
+.article-body li {
+    margin-bottom: 8px;
+    background: none;
+    padding: 0;
+}
+
+.article-body li:hover {
+    transform: none;
+    background: none;
+}
+#articleModal {
+    display: none; /* 默认隐藏 */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+}
+/* 显示时的控制类 */
+.modal-show {
+    display: block !important;
+}
+/* 错误提示样式 */
+.error-message {
+    color: #ff4444;
+    text-align: center;
+    padding: 50px 20px;
+}
+/* 步骤2身体部位样式 */
+.body-part {
+    padding: 20px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.body-part:hover {
+    border-color: #0072c6;
+    box-shadow: 0 4px 15px rgba(0,114,198,0.1);
+}
+
+/* 症状选项选中状态 */
+.symptom-option.selected {
+    background: #0072c6;
+    color: white;
+}
+
+/* 移动端适配 */
+@media (max-width: 480px) {
+    .body-part {
+        padding: 15px;
+        margin: 10px 0;
+    }
+    
+    .symptom-option {
+        padding: 12px;
+    }
+}

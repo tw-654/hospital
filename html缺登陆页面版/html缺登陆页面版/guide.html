@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能导诊 - 奔向五一医院</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 新增年龄输入样式 */
+        .age-input {
+            text-align: center;
+            padding: 40px;
+        }
+
+        #ageInput {
+            font-size: 1.2rem;
+            padding: 12px 20px;
+            width: 200px;
+            border: 2px solid #0072c6;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .age-tip {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>智能症状分诊系统</h1>
+        <a href="index.html" class="return-btn">返回首页</a>
+    </header>
+
+    <div class="guide-steps">
+        <div class="step-indicator active">1</div>
+        <div class="step-indicator">2</div>
+        <div class="step-indicator">3</div>
+        <div class="step-indicator">4</div>
+    </div>
+
+    <!-- 步骤1：年龄输入 -->
+    <div id="step1" class="age-input">
+        <h2>请先输入患者年龄</h2>
+        <input type="number" id="ageInput" min="0" max="120" placeholder="请输入周岁年龄">
+        <div class="age-tip">（儿童患者请直接挂儿科门诊）</div>
+        <button class="guide-dialog" onclick="checkAge()">下一步</button>
+    </div>
+
+    <!-- 步骤2：选择身体部位 -->
+    <div id="step2" class="symptom-selection" style="display:none;">
+        <!-- 原有身体部位选择内容保持不变 -->
+    </div>
+
+    <!-- 步骤3：选择具体症状 -->
+    <div id="step3" class="symptom-selection symptom-options" style="display:none;">
+        <!-- 原有症状选择内容保持不变 -->
+    </div>
+
+    <!-- 步骤4：显示推荐结果 -->
+    <div id="resultSection" style="display:none;">
+        <!-- 原有结果显示内容保持不变 -->
+    </div>
+
+    <script>
+        // 更新后的症状数据库
+        const symptomData = {
+            '头部': ['头痛', '头晕', '外伤', '发热', '失眠'],
+            '胸部': ['胸痛', '胸闷', '心悸', '乳房肿块', '咳嗽'],
+            '腹部': ['腹痛', '腹泻', '恶心呕吐', '便秘', '腹胀'],
+            '生殖系统': ['月经不调', '下腹痛', '阴道出血', '早孕检查', '性传播疾病']
+        };
+
+        // 更新后的科室匹配规则（仅包含四个科室）
+        const departmentRules = {
+            // 内科症状
+            '头痛': '内科',
+            '头晕': '内科',
+            '发热': '内科',
+            '胸闷': '内科',
+            '心悸': '内科',
+            '腹泻': '内科',
+            '恶心呕吐': '内科',
+            '便秘': '内科',
+            
+            // 外科症状
+            '外伤': '外科',
+            '乳房肿块': '外科',
+            '腹痛': '外科',
+            '腹胀': '外科',
+            
+            // 妇产科症状
+            '月经不调': '妇产科',
+            '下腹痛': '妇产科',
+            '阴道出血': '妇产科',
+            '早孕检查': '妇产科',
+            '性传播疾病': '妇产科'
+        };
+
+        let currentStep = 1;
+        let patientAge = 0;
+        let selectedSymptoms = [];
+
+        // 新增年龄检查函数
+        function checkAge() {
+            const age = parseInt(document.getElementById('ageInput').value);
+            if (isNaN(age) || age < 0 || age > 120) {
+                alert("请输入有效的年龄（0-120岁）");
+                return;
+            }
+            
+            patientAge = age;
+            
+            // 儿童直接推荐儿科
+            if (age < 14) {
+                showPediatricResult();
+            } else {
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('step2').style.display = 'grid';
+                updateStepIndicator(2);
+            }
+        }
+
+        // 新增儿科推荐函数
+        function showPediatricResult() {
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('resultSection').style.display = 'block';
+            updateStepIndicator(4);
+            
+            document.getElementById('recommendDept').textContent = '儿科';
+            document.getElementById('recommendReason').textContent = 
+                `根据患者年龄（${patientAge}周岁），建议直接挂儿科门诊`;
+        }
+
+        // 修改后的症状选择函数
+        function selectSymptom(symptom) {
+            selectedSymptoms.push(symptom);
+            
+            // 特殊逻辑：妇产科症状直接推荐
+            if (symptom.includes('月经') || symptom.includes('阴道') || 
+                symptom.includes('早孕') || symptom.includes('性病')) {
+                showFinalRecommendation('妇产科');
+            } else {
+                showFinalRecommendation();
+            }
+        }
+
+        // 修改后的推荐函数
+        function showFinalRecommendation(specialDept) {
+            const matchedDept = specialDept || findDepartment(selectedSymptoms);
+            
+            document.getElementById('step3').style.display = 'none';
+            document.getElementById('resultSection').style.display = 'block';
+            updateStepIndicator(4);
+            
+            document.getElementById('recommendDept').textContent = matchedDept;
+            document.getElementById('recommendReason').textContent = 
+                `根据症状分析：${selectedSymptoms.join('、')}，建议挂${matchedDept}号`;
+        }
+
+        // 更新后的科室匹配逻辑
+        function findDepartment(symptoms) {
+            for(let symptom of symptoms) {
+                if(departmentRules[symptom]) {
+                    return departmentRules[symptom];
+                }
+            }
+            return '内科'; // 默认推荐内科
+        }
+
+        function goBackToStep1() {
+            document.getElementById('step1').style.display = 'grid';
+            document.getElementById('step2').style.display = 'none';
+            updateStepIndicator(1);
+            selectedSymptoms = [];
+        }
+
+        function restartGuide() {
+            location.reload();
+        }
+
+        function updateStepIndicator(step) {
+            document.querySelectorAll('.step-indicator').forEach((el, index) => {
+                el.classList.toggle('active', index < step);
+            });
+        }
+    </script>
+</body>
+</html>
