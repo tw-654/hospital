@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+// 更新 API 基础 URL
+const API_BASE = 'http://121.40.80.144:3001';
+
 const LoginPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
     const [registerUsername, setRegisterUsername] = useState('');
@@ -12,6 +15,7 @@ const LoginPage: React.FC = () => {
     const [loginPassword, setLoginPassword] = useState('');
     const [showRegisterSuccess, setShowRegisterSuccess] = useState(false);
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const router = useRouter();
 
@@ -23,31 +27,39 @@ const LoginPage: React.FC = () => {
     const handleRegisterSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError('');
+        setIsLoading(true);
 
         // 前端验证
         if (!registerUsername || !registerPassword) {
             setError('用户名和密码不能为空');
+            setIsLoading(false);
             return;
         }
 
         if (registerUsername.length < 4 || registerUsername.length > 16) {
             setError('用户名长度需在4-16位之间');
+            setIsLoading(false);
             return;
         }
 
         if (registerPassword.length < 8) {
             setError('密码长度至少为8位');
+            setIsLoading(false);
             return;
         }
 
         try {
-            const res = await fetch('/api/auth/register', {
+            const res = await fetch(`${API_BASE}/api/auth/register`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
                 body: JSON.stringify({
                     username: registerUsername,
                     password: registerPassword
-                })
+                }),
+                signal: AbortSignal.timeout(10000) // 10秒超时
             });
 
             const data = await res.json();
@@ -62,42 +74,75 @@ const LoginPage: React.FC = () => {
             } else {
                 setError(data.message || '注册失败');
             }
-        } catch (err) {
-            setError('网络连接异常，请检查后重试');
+        } catch (err: any) {
+            console.error('注册失败:', err);
+            if (err.name === 'AbortError') {
+                setError('注册请求超时，请检查网络连接');
+            } else if (err.message.includes('Failed to fetch')) {
+                setError('无法连接到服务器，请检查：\n1. 服务器是否正在运行\n2. 网络连接是否正常\n3. 服务器地址是否正确');
+            } else {
+                setError(err.message || '注册失败');
+            }
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const handleLoginSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError('');
+        setIsLoading(true);
 
         if (!loginUsername || !loginPassword) {
             setError('用户名和密码不能为空');
+            setIsLoading(false);
             return;
         }
 
         try {
-            const res = await fetch('/api/auth/login', {
+            // 检查是否是管理员登录
+            const isAdminLogin = loginUsername === '00000000' && loginPassword === '00000000';
+            
+            const res = await fetch(`${API_BASE}/api/auth/login`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
                 body: JSON.stringify({
                     username: loginUsername,
                     password: loginPassword
-                })
+                }),
+                signal: AbortSignal.timeout(10000) // 10秒超时
             });
 
             const data = await res.json();
 
-            if (res.ok) {
+            if (res.ok && data.user && data.token) {
                 // 存储用户信息和token
                 localStorage.setItem('userInfo', JSON.stringify(data.user));
                 localStorage.setItem('token', data.token);
-                router.push('/');
+                
+                if (isAdminLogin) {
+                    localStorage.setItem('isAdmin', 'true');
+                    router.push('/admin');
+                } else {
+                    router.push('/');
+                }
             } else {
                 setError(data.message || '登录失败');
             }
-        } catch (err) {
-            setError('网络连接异常，请检查后重试');
+        } catch (err: any) {
+            console.error('登录失败:', err);
+            if (err.name === 'AbortError') {
+                setError('登录请求超时，请检查网络连接');
+            } else if (err.message.includes('Failed to fetch')) {
+                setError('无法连接到服务器，请检查：\n1. 服务器是否正在运行\n2. 网络连接是否正常\n3. 服务器地址是否正确');
+            } else {
+                setError(err.message || '登录失败');
+            }
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -138,6 +183,7 @@ const LoginPage: React.FC = () => {
                                 placeholder="请输入用户名"
                                 value={loginUsername}
                                 onChange={(e) => setLoginUsername(e.target.value)}
+                                disabled={isLoading}
                             />
                         </div>
                         <div className="mb-6">
@@ -151,13 +197,15 @@ const LoginPage: React.FC = () => {
                                 placeholder="请输入密码"
                                 value={loginPassword}
                                 onChange={(e) => setLoginPassword(e.target.value)}
+                                disabled={isLoading}
                             />
                         </div>
                         <button
                             type="submit"
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"
+                            className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            disabled={isLoading}
                         >
-                            登录
+                            {isLoading ? '处理中...' : '登录'}
                         </button>
                     </form>
                 ) : (
@@ -173,6 +221,7 @@ const LoginPage: React.FC = () => {
                                 placeholder="请输入用户名"
                                 value={registerUsername}
                                 onChange={(e) => setRegisterUsername(e.target.value)}
+                                disabled={isLoading}
                             />
                         </div>
                         <div className="mb-6">
@@ -186,13 +235,15 @@ const LoginPage: React.FC = () => {
                                 placeholder="请输入密码"
                                 value={registerPassword}
                                 onChange={(e) => setRegisterPassword(e.target.value)}
+                                disabled={isLoading}
                             />
                         </div>
                         <button
                             type="submit"
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"
+                            className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            disabled={isLoading}
                         >
-                            注册
+                            {isLoading ? '处理中...' : '注册'}
                         </button>
                     </form>
                 )}

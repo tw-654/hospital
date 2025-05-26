@@ -48,13 +48,12 @@ export default function ProfilePage() {
 
 const handleLogout = () => {
   // 清除认证状态
-  localStorage.removeItem('isLoggedIn');
-  localStorage.removeItem('userInfo'); // 如果存储了用户信息也需要清除
+  localStorage.removeItem('token');
+  localStorage.removeItem('userInfo');
+  localStorage.removeItem('isAdmin');
   
   // 返回首页
-  window.location.href = '/';
-  
-
+  router.push('/');
 };
 
 
