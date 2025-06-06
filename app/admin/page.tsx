@@ -1,323 +1,92 @@
-// pages/department/adminis.js
-
+// hospital/app/admin/page.tsx
 'use client';
-
-import '../../style.css';
-import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-// 定义类型
-type Department = {
-    id: number;
-    name: string;
-};
-
+// 定义医生类型
 type Doctor = {
     id: number;
     name: string;
     title: string;
     specialty: string;
-    department: string;
 };
 
-// 更新 API 基础 URL
-const API_BASE = 'http://121.40.80.144:3001/api';
+// 定义文章（公告）类型
+type Article = {
+    id: number;
+    title: string;
+    content: string;
+};
 
 const AdminPage = () => {
-    const [name, setName] = useState('');
-    const [title, setTitle] = useState('');
-    const [specialty, setSpecialty] = useState('');
-    const [department, setDepartment] = useState('');
-    const [departments, setDepartments] = useState<Department[]>([]);
-    const [newDepartment, setNewDepartment] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [doctors, setDoctors] = useState<Doctor[]>([]);
+    const [articles, setArticles] = useState<Article[]>([]);
     const router = useRouter();
 
     useEffect(() => {
-        // 检查管理员权限
-        const checkAdminAuth = () => {
-            const isAdmin = localStorage.getItem('isAdmin');
-            if (isAdmin !== 'true') {
-                alert('您没有管理员权限');
-                router.push('/');
-            }
-        };
+        // 模拟获取医生数据
+        const mockDoctors: Doctor[] = [
+            { id: 1, name: '王强', title: '主任医师', specialty: '高血压门诊' },
+            { id: 2, name: '李明', title: '副主任医师', specialty: '消化内科' },
+            { id: 3, name: '张华', title: '主治医师', specialty: '呼吸内科' }
+        ];
+        setDoctors(mockDoctors);
 
-        checkAdminAuth();
+        // 模拟获取公告数据
+        const mockArticles: Article[] = [
+            { id: 1, title: '【最新】五一假期门诊安排通知', content: '五一期间门诊正常开放...' },
+            { id: 2, title: '新引进 CT 设备正式投入使用', content: '我院最新引进的256层螺旋CT...' }
+        ];
+        setArticles(mockArticles);
+    }, []);
 
-        // 获取科室列表
-        const fetchDepartments = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    throw new Error('未登录或登录已过期');
-                }
-
-                console.log('正在请求科室列表...');
-                console.log('请求URL:', `${API_BASE}/departments`);
-                console.log('Token:', token);
-
-                const res = await fetch(`${API_BASE}/departments`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    // 添加超时设置
-                    signal: AbortSignal.timeout(10000) // 10秒超时
-                });
-
-                console.log('服务器响应状态:', res.status);
-                console.log('服务器响应头:', Object.fromEntries(res.headers.entries()));
-
-                if (!res.ok) {
-                    if (res.status === 401) {
-                        throw new Error('登录已过期，请重新登录');
-                    }
-                    const errorText = await res.text();
-                    console.error('服务器错误响应:', errorText);
-                    throw new Error(`获取科室列表失败: ${res.status} ${res.statusText}\n${errorText}`);
-                }
-
-                const data = await res.json();
-                console.log('获取到的科室数据:', data);
-                setDepartments(data);
-            } catch (error: any) {
-                console.error('获取科室列表失败:', error);
-                if (error.name === 'AbortError') {
-                    setError('请求超时，请检查网络连接');
-                } else if (error.message.includes('Failed to fetch')) {
-                    setError('无法连接到服务器，请检查：\n1. 服务器是否正在运行\n2. 网络连接是否正常\n3. 服务器地址是否正确');
-                } else {
-                    setError(error.message);
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchDepartments();
-    }, [router]);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
-
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                throw new Error('未登录或登录已过期');
-            }
-
-            const res = await fetch(`${API_BASE}/doctors`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    name,
-                    title,
-                    specialty,
-                    department,
-                }),
-            });
-
-            if (!res.ok) {
-                if (res.status === 401) {
-                    throw new Error('登录已过期，请重新登录');
-                }
-                const errorData = await res.json();
-                throw new Error(errorData.message || '添加医生失败');
-            }
-
-            const responseData = await res.json();
-            alert(`医生信息添加成功！医生ID: ${responseData.doctorId}`);
-            
-            // 清空表单
-            setName('');
-            setTitle('');
-            setSpecialty('');
-            setDepartment('');
-
-        } catch (error: any) {
-            console.error('添加医生失败:', error);
-            if (error.message.includes('Failed to fetch')) {
-                setError('无法连接到服务器，请检查网络连接');
-            } else {
-                setError(error.message);
-            }
-            alert('医生信息添加失败: ' + error.message);
-        } finally {
-            setLoading(false);
-        }
+    const handleLogout = () => {
+        // 清除认证状态
+        localStorage.removeItem('token');
+        localStorage.removeItem('userInfo');
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('isAdmin');
+        // 返回首页
+        router.push('/');
     };
-
-    const handleAddDepartment = async () => {
-        if (!newDepartment.trim()) {
-            alert('请输入科室名称');
-            return;
-        }
-
-        setLoading(true);
-        setError(null);
-
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                throw new Error('未登录或登录已过期');
-            }
-
-            const res = await fetch(`${API_BASE}/departments`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    name: newDepartment,
-                }),
-            });
-
-            if (!res.ok) {
-                if (res.status === 401) {
-                    throw new Error('登录已过期，请重新登录');
-                }
-                const errorData = await res.json();
-                throw new Error(errorData.message || '添加科室失败');
-            }
-
-            const responseData = await res.json();
-            alert(`科室添加成功！科室ID: ${responseData.departmentId}`);
-            setNewDepartment('');
-
-            // 重新获取科室列表
-            const updatedRes = await fetch(`${API_BASE}/departments`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (!updatedRes.ok) {
-                throw new Error('获取更新后的科室列表失败');
-            }
-            const updatedData = await updatedRes.json();
-            setDepartments(updatedData);
-
-        } catch (error: any) {
-            console.error('添加科室失败:', error);
-            if (error.message.includes('Failed to fetch')) {
-                setError('无法连接到服务器，请检查网络连接');
-            } else {
-                setError(error.message);
-            }
-            alert('科室添加失败: ' + error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (loading) {
-        return <div className="loading">加载中...</div>;
-    }
 
     return (
-        <div className="department-container">
+        <div className="admin-container">
             <header>
-                <h1 id="departmentTitle">管理医生信息</h1>
+                <h1>管理员页面</h1>
                 <div className="header-buttons">
+                    <Link href="/" className="return-btn">返回首页</Link>
                     <button 
-                        onClick={() => router.push('/')} 
-                        className="return-btn"
+                        className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                        onClick={handleLogout}
                     >
-                        返回首页
+                        退出登录
                     </button>
                 </div>
             </header>
-            {error && (
-                <div className="error-message">
-                    {error}
+            <div className="main-content">
+                <div className="registration-section">
+                    <h2>管理挂号信息</h2>
+                    <ul>
+                        <li>
+                            <Link href="/admin/doctors" className="btn">管理医生信息</Link>
+                        </li>
+                        <li>
+                            <Link href="/admin/departments" className="btn">管理科室信息</Link>
+                        </li>
+                    </ul>
                 </div>
-            )}
-            <div className="admin-form">
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label htmlFor="name">姓名：</label>
-                        <input
-                            type="text"
-                            id="name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            required
-                            disabled={loading}
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="title">职称：</label>
-                        <input
-                            type="text"
-                            id="title"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            required
-                            disabled={loading}
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="specialty">专长：</label>
-                        <input
-                            type="text"
-                            id="specialty"
-                            value={specialty}
-                            onChange={(e) => setSpecialty(e.target.value)}
-                            required
-                            disabled={loading}
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="department">科室：</label>
-                        <select
-                            id="department"
-                            value={department}
-                            onChange={(e) => setDepartment(e.target.value)}
-                            required
-                            disabled={loading}
-                        >
-                            <option value="">请选择科室</option>
-                            {departments.map((dept) => (
-                                <option key={dept.id} value={dept.name}>{dept.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <button 
-                        type="submit" 
-                        className="submit-btn"
-                        disabled={loading}
-                    >
-                        {loading ? '处理中...' : '添加医生'}
-                    </button>
-                </form>
-                {/* 添加科室 */}
-                <div className="add-department">
-                    <label htmlFor="newDepartment">添加新科室：</label>
-                    <input
-                        type="text"
-                        id="newDepartment"
-                        value={newDepartment}
-                        onChange={(e) => setNewDepartment(e.target.value)}
-                        disabled={loading}
-                    />
-                    <button 
-                        onClick={handleAddDepartment} 
-                        className="add-department-btn"
-                        disabled={loading}
-                    >
-                        {loading ? '处理中...' : '添加科室'}
-                    </button>
+                <div className="notice-section">
+                    <h2>管理公告</h2>
+                    <ul>
+                        <li>
+                            <Link href="/admin/articles/add" className="btn">添加公告</Link>
+                        </li>
+                        <li>
+                            <Link href="/admin/articles/delete" className="btn">删除公告</Link>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>
